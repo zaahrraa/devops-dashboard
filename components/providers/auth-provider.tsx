@@ -60,7 +60,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setCurrentUser(currentUserData);
     setIsAuthenticated(true);
-    localStorage.setItem('currentUser', JSON.stringify(currentUserData));
+    
+    // Save to localStorage
+    const jsonData = JSON.stringify(currentUserData);
+    try {
+      localStorage.setItem('currentUser', jsonData);
+    } catch (e) {
+      console.error('Failed to save to localStorage:', e);
+    }
+    
     setIsLoading(false);
 
     return { success: true };

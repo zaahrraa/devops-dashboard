@@ -2,25 +2,32 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, userRole, accountStatus, isLoading } = useAuth();
 
   useEffect(() => {
-    if (isLoading) return;
+    // Check if user is authenticated from localStorage
+    try {
+      const storedUser = localStorage.getItem('currentUser');
+      if (!storedUser) {
+        router.push('/auth');
+        return;
+      }
 
-    if (!isAuthenticated) {
+      const user = JSON.parse(storedUser);
+      
+      if (user.status === 'pending') {
+        router.push('/auth');
+      } else if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (error) {
       router.push('/auth');
-    } else if (accountStatus === 'pending') {
-      router.push('/auth');
-    } else if (userRole === 'admin') {
-      router.push('/admin');
-    } else {
-      router.push('/dashboard');
     }
-  }, [isAuthenticated, userRole, accountStatus, isLoading, router]);
+  }, [router]);
 
   return (
     <div className="flex items-center justify-center h-screen">

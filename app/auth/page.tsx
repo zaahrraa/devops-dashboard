@@ -18,16 +18,20 @@ export default function AuthPage() {
   const [signupEmail, setSignupEmail] = useState('');
   const [pendingEmail, setPendingEmail] = useState('');
 
-  // Redirect if already authenticated and active
+  // Check for redirect - runs on context updates
   useEffect(() => {
-    if (isAuthenticated && accountStatus === 'active') {
-      if (userRole === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
+    if (isAuthenticated && accountStatus === 'active' && currentUser) {
+      // Small delay to ensure context is fully updated
+      const timer = setTimeout(() => {
+        if (userRole === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/dashboard');
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, accountStatus, userRole, router]);
+  }, [isAuthenticated, accountStatus, currentUser, userRole, router]);
 
   // Handle pending user login
   useEffect(() => {

@@ -34,38 +34,45 @@ export const AuthForm: React.FC<AuthFormProps> = ({ mode, onModeChange }) => {
     setError(null);
     setSuccess(null);
 
-    if (mode === 'login') {
-      if (!formData.email || !formData.password) {
-        setError('Email and password are required');
-        return;
-      }
+    try {
+      if (mode === 'login') {
+        if (!formData.email || !formData.password) {
+          setError('Email and password are required');
+          return;
+        }
 
-      const result = await login(formData.email, formData.password);
-      if (!result.success) {
-        setError(result.message || 'Login failed');
-      } else if (result.message === 'pending') {
-        // User is pending - this will be handled by the page
-        setSuccess('pending');
+        const result = await login(formData.email, formData.password);
+        
+        if (!result.success) {
+          setError(result.message || 'Login failed');
+        } else if (result.message === 'pending') {
+          // User is pending - this will be handled by the page
+          setSuccess('pending');
+        } else {
+          setSuccess('login_success');
+          // The page will handle navigation via useEffect watching isAuthenticated
+        }
       } else {
-        setSuccess('login_success');
-      }
-    } else {
-      if (!formData.name || !formData.email || !formData.password) {
-        setError('All fields are required');
-        return;
-      }
+        if (!formData.name || !formData.email || !formData.password) {
+          setError('All fields are required');
+          return;
+        }
 
-      if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters');
-        return;
-      }
+        if (formData.password.length < 6) {
+          setError('Password must be at least 6 characters');
+          return;
+        }
 
-      const result = await signup(formData.name, formData.email, formData.password);
-      if (!result.success) {
-        setError(result.message || 'Signup failed');
-      } else {
-        setSuccess('signup_success');
+        const result = await signup(formData.name, formData.email, formData.password);
+        
+        if (!result.success) {
+          setError(result.message || 'Signup failed');
+        } else {
+          setSuccess('signup_success');
+        }
       }
+    } catch (err) {
+      setError('An unexpected error occurred');
     }
   };
 
