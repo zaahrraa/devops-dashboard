@@ -1,20 +1,25 @@
-import { CheckCircle2, AlertCircle } from 'lucide-react';
+'use client';
 
-interface Deployment {
-  version: string;
-  lastDeployment: string;
-  environment: string;
-  health: 'Healthy' | 'Warning' | 'Critical';
-}
-
-const deployment: Deployment = {
-  version: 'v2.3.1',
-  lastDeployment: '2 hours ago',
-  environment: 'Production',
-  health: 'Healthy',
-};
+import { useEffect, useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
+import type { DashboardDeployment } from '@/lib/dashboard-types';
 
 export default function DeploymentsSection() {
+  const [deployment, setDeployment] = useState<DashboardDeployment | null>(null);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then((response) => response.json())
+      .then((data) => {
+        setDeployment(data.deployment ?? null);
+      })
+      .catch(() => setDeployment(null));
+  }, []);
+
+  if (!deployment) {
+    return null;
+  }
+
   return (
     <div className="space-y-6">
       {/* Current Deployment Card */}

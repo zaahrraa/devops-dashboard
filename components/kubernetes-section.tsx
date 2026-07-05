@@ -1,24 +1,10 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import type { DashboardPod } from '@/lib/dashboard-types';
 
-interface Pod {
-  name: string;
-  status: 'Running' | 'Pending' | 'CrashLoopBackOff' | 'Completed';
-  namespace: string;
-  restarts: number;
-}
-
-const pods: Pod[] = [
-  { name: 'api-service-pod-1', status: 'Running', namespace: 'default', restarts: 0 },
-  { name: 'api-service-pod-2', status: 'Running', namespace: 'default', restarts: 0 },
-  { name: 'frontend-web-app-1', status: 'Running', namespace: 'frontend', restarts: 2 },
-  { name: 'frontend-web-app-2', status: 'Running', namespace: 'frontend', restarts: 0 },
-  { name: 'database-sync-job', status: 'Running', namespace: 'database', restarts: 1 },
-  { name: 'cache-daemon-1', status: 'Running', namespace: 'cache', restarts: 0 },
-  { name: 'worker-queue-1', status: 'Pending', namespace: 'workers', restarts: 0 },
-  { name: 'legacy-service-1', status: 'CrashLoopBackOff', namespace: 'legacy', restarts: 5 },
-];
-
-function getStatusColor(status: Pod['status']) {
+function getStatusColor(status: DashboardPod['status']) {
   switch (status) {
     case 'Running':
       return 'bg-green-500/20 text-green-400 border-green-500/30';
@@ -34,6 +20,17 @@ function getStatusColor(status: Pod['status']) {
 }
 
 export default function KubernetesSection() {
+  const [pods, setPods] = useState<DashboardPod[]>([]);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then((response) => response.json())
+      .then((data) => {
+        setPods(data.pods ?? []);
+      })
+      .catch(() => setPods([]));
+  }, []);
+
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">

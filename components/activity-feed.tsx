@@ -1,66 +1,10 @@
+'use client';
+
 import { CheckCircle2, AlertCircle, GitBranch, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { DashboardActivity } from '@/lib/dashboard-types';
 
-interface Activity {
-  id: number;
-  type: 'success' | 'warning' | 'info' | 'error';
-  title: string;
-  description: string;
-  timestamp: string;
-  icon: React.ReactNode;
-}
-
-const activities: Activity[] = [
-  {
-    id: 1,
-    type: 'success',
-    title: 'Deployment completed',
-    description: 'Successfully deployed v2.3.1 to production cluster',
-    timestamp: '2 hours ago',
-    icon: <CheckCircle2 className="w-5 h-5" />,
-  },
-  {
-    id: 2,
-    type: 'success',
-    title: 'Pod restarted',
-    description: 'Pod "api-service-pod-1" restarted successfully after crash',
-    timestamp: '3 hours ago',
-    icon: <Zap className="w-5 h-5" />,
-  },
-  {
-    id: 3,
-    type: 'success',
-    title: 'Health check passed',
-    description: 'All health checks passed for deployment "frontend-web-app"',
-    timestamp: '4 hours ago',
-    icon: <CheckCircle2 className="w-5 h-5" />,
-  },
-  {
-    id: 4,
-    type: 'warning',
-    title: 'Rolling update finished',
-    description: 'Rolling update completed for "worker-queue" with 0 errors',
-    timestamp: '5 hours ago',
-    icon: <AlertCircle className="w-5 h-5" />,
-  },
-  {
-    id: 5,
-    type: 'success',
-    title: 'Configuration updated',
-    description: 'ConfigMap updated for database-sync job',
-    timestamp: '6 hours ago',
-    icon: <GitBranch className="w-5 h-5" />,
-  },
-  {
-    id: 6,
-    type: 'info',
-    title: 'Node maintenance scheduled',
-    description: 'Scheduled maintenance on node "worker-03" at 2AM UTC',
-    timestamp: '8 hours ago',
-    icon: <AlertCircle className="w-5 h-5" />,
-  },
-];
-
-function getActivityColor(type: Activity['type']) {
+function getActivityColor(type: DashboardActivity['type']) {
   switch (type) {
     case 'success':
       return 'text-green-400';
@@ -75,7 +19,33 @@ function getActivityColor(type: Activity['type']) {
   }
 }
 
+function getActivityIcon(type: DashboardActivity['type']) {
+  switch (type) {
+    case 'success':
+      return <CheckCircle2 className="w-5 h-5" />;
+    case 'warning':
+      return <AlertCircle className="w-5 h-5" />;
+    case 'error':
+      return <AlertCircle className="w-5 h-5" />;
+    case 'info':
+      return <GitBranch className="w-5 h-5" />;
+    default:
+      return <Zap className="w-5 h-5" />;
+  }
+}
+
 export default function ActivityFeed() {
+  const [activities, setActivities] = useState<DashboardActivity[]>([]);
+
+  useEffect(() => {
+    fetch('/api/dashboard')
+      .then((response) => response.json())
+      .then((data) => {
+        setActivities(data.activities ?? []);
+      })
+      .catch(() => setActivities([]));
+  }, []);
+
   return (
     <div className="bg-card border border-border rounded-lg p-6">
       <h2 className="text-xl font-bold text-foreground mb-6">Activity Feed</h2>
@@ -84,7 +54,7 @@ export default function ActivityFeed() {
         {activities.map((activity) => (
           <div key={activity.id} className="flex gap-4 pb-4 border-b border-border/50 last:border-b-0 last:pb-0">
             {/* Icon */}
-            <div className={`flex-shrink-0 ${getActivityColor(activity.type)}`}>{activity.icon}</div>
+            <div className={`shrink-0 ${getActivityColor(activity.type)}`}>{getActivityIcon(activity.type)}</div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
