@@ -79,8 +79,8 @@ async function queryRows<T>(sql: string): Promise<T[]> {
 
   const client = await pool.connect();
   try {
-    const result = await client.query<T>(sql);
-    return result.rows;
+    const result = await client.query(sql);
+    return result.rows as T[];
   } finally {
     client.release();
   }
