@@ -1,35 +1,53 @@
-# Stage 1: Build the app
-FROM node:20-alpine AS builder
-
-# Install pnpm globally to manage your dependencies
-RUN npm install -g pnpm
+# ---------- Stage 1: Install Dependencies ----------
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
-# Copy the dependency files first (caching layer)
+# Enable pnpm
+RUN corepack enable
+RUN corepack prepare pnpm@10.30.3 --activate
+# Copy dependency files
 COPY package.json pnpm-lock.yaml* ./
+
+# Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy the rest of the project source code
-COPY . .
+# ---------- Stage 2: Build Application ----------
+FROM node:22-alpine AS builder
 
-# Build the application
-RUN pnpm run build
-
-# Stage 2: Serve the app
-FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Set to production mode
+RUN corepack enable
+RUN corepack prepare pnpm@10.30.3 --activate
+
+# Copy installed dependencies
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy project files
+COPY . .
+
+# Build the Next.js app
+RUN pnpm build
+
+# ---------- Stage 3: Production ----------
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
 ENV NODE_ENV=production
 
-# Copy the standalone build artifacts from the builder stage
-# This creates a very small, efficient production image
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/static ./.next/static
+RUN corepack enable
+RUN corepack prepare pnpm@10.30.3 --activate
 
+# Copy only what's needed to run the app
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/next.config.* ./
+
+# Expose Next.js port
 EXPOSE 3000
 
-# The command to start your production server
-CMD ["node", "server.js"]
+# Start the application
+CMD ["pnpm", "start"]
