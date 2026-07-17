@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# deploy-local.sh - Pull latest image from Docker Hub and deploy to Minikube
+# deploy-local.sh - Deploy latest image from Docker Hub to Minikube
 
 echo "🚀 Starting deployment to Minikube..."
 echo ""
@@ -28,69 +28,74 @@ eval $(minikube -p minikube docker-env)
 echo -e "${GREEN}✅ Docker environment set${NC}"
 echo ""
 
-# 3. Pull the latest image from Docker Hub
-echo "📦 Pulling latest image from Docker Hub..."
-# Read the image from the deployment file
+# 3. Get the image from deployment file
 IMAGE=$(grep "image:" k8s/app-deployment.yaml | head -1 | awk '{print $2}')
-echo "Image: $IMAGE"
+echo "📦 Target image: $IMAGE"
+echo ""
 
+# 4. Pull the latest image from Docker Hub
+echo "📥 Pulling image from Docker Hub..."
 if docker pull $IMAGE; then
     echo -e "${GREEN}✅ Image pulled successfully${NC}"
 else
     echo -e "${RED}❌ Failed to pull image${NC}"
+    echo "Make sure you've pushed the image to Docker Hub first!"
+    echo "Run: docker push $IMAGE"
     exit 1
 fi
 echo ""
 
-# 4. Apply Kubernetes manifests
+# 5. Apply Kubernetes manifests
 echo "📋 Applying Kubernetes manifests..."
 kubectl apply -f k8s/
 echo -e "${GREEN}✅ Manifests applied${NC}"
 echo ""
 
-# 5. Force rollout restart to pick up new image
+# 6. Force rollout restart to pick up new image
 echo "🔄 Restarting deployment to pick up new image..."
 kubectl rollout restart deployment/devops-dashboard
 echo ""
 
-# 6. Wait for rollout to complete
+# 7. Wait for rollout to complete
 echo "⏳ Waiting for rollout to complete..."
 if kubectl rollout status deployment/devops-dashboard --timeout=120s; then
     echo -e "${GREEN}✅ Rollout complete!${NC}"
 else
     echo -e "${RED}❌ Rollout timed out${NC}"
-    echo "Check pod status: kubectl get pods"
-    echo "Check pod logs: kubectl logs -f deployment/devops-dashboard"
+    echo ""
+    echo "📊 Debug commands:"
+    echo "  - Check pod status: kubectl get pods"
+    echo "  - Check logs: kubectl logs -f deployment/devops-dashboard"
+    echo "  - Describe pod: kubectl describe pod <pod-name>"
     exit 1
 fi
 echo ""
 
-# 7. Show pod status
+# 8. Show pod status
 echo "📊 Pod status:"
 kubectl get pods
 echo ""
 
-# 8. Get the service URL
+# 9. Get the service URL
 echo "🌐 Getting service URL..."
-SERVICE_URL=$(minikube service devops-dashboard --url 2>/dev/null || echo "Service not found")
+SERVICE_URL=$(minikube service devops-dashboard --url 2>/dev/null || echo "")
 if [ -n "$SERVICE_URL" ]; then
     echo -e "${GREEN}✅ Service URL: $SERVICE_URL${NC}"
 else
     echo -e "${YELLOW}⚠️  Service not found. Check service status:${NC}"
     kubectl get svc
     echo ""
-    echo "Try port-forwarding:"
-    echo "kubectl port-forward service/devops-dashboard 3000:80"
+    echo "💡 Try port-forwarding:"
+    echo "   kubectl port-forward service/devops-dashboard 3000:80"
 fi
 echo ""
 
-# 9. Show helpful commands
+# 10. Helpful commands
 echo "📚 Useful commands:"
 echo "  - Check logs:        kubectl logs -f deployment/devops-dashboard"
 echo "  - Get pods:          kubectl get pods"
-echo "  - Describe pod:      kubectl describe pod <pod-name>"
-echo "  - Port forward:      kubectl port-forward service/devops-dashboard 3000:80"
 echo "  - Restart manually:  kubectl rollout restart deployment/devops-dashboard"
+echo "  - Port forward:      kubectl port-forward service/devops-dashboard 3000:80"
 echo ""
 
 echo -e "${GREEN}🎉 Deployment complete!${NC}"

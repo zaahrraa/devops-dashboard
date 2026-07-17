@@ -2,12 +2,8 @@ name: Build and Push to Docker Hub
 
 on:
   push:
-    branches:
-      - main
-      - master
-  pull_request:
-    branches:
-      - main
+    branches: [ main, master ]
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/devops-dashboard
@@ -18,22 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
       
-      # 2. Set up Docker Buildx (for better caching)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      # 3. Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
       
-      # 4. Build and push Docker image with multiple tags
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -45,29 +37,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
-      # 5. Update deployment manifest with new image tag
-      - name: Update deployment manifest
-        run: |
-          # Replace the image in the deployment file
-          sed -i "s|image: .*|image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}|g" k8s/app-deployment.yaml
-          
-          # Show the change (for logs)
-          echo "Updated deployment with image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}"
-          grep "image:" k8s/app-deployment.yaml
-      
-      # 6. Commit the updated manifest back to repo
-      - name: Commit and push updated manifest
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add k8s/app-deployment.yaml
-          git diff --staged --quiet || git commit -m "Update image tag to ${{ github.sha }}"
-          git push
-      
-      # 7. Print success message
-      - name: Print build info
+      - name: Show image info
         run: |
           echo "✅ Image built and pushed successfully!"
           echo "📦 Image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}"
           echo "📦 Image: ${{ env.DOCKER_IMAGE }}:latest"
-          echo "🔗 Deployment manifest updated in repo"
+          echo ""
+          echo "🚀 To deploy, run: ./deploy-local.sh"

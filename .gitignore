@@ -23,3 +23,9 @@ Dockerfile
 .dockerignore
 .env
 .vscode
+# Add these to your .gitignore if not already there
+deploy-local.sh
+autodeploy.sh
+push-and-deploy.sh
+*.log
+.DS_Store
