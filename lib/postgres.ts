@@ -1,6 +1,5 @@
 import { Pool } from 'pg';
 import type { DashboardActivity, DashboardData, DashboardDeployment, DashboardMetric, DashboardPod } from '@/lib/dashboard-types';
-
 declare global {
   var dashboardPool: Pool | undefined;
 }

@@ -1,0 +1,46 @@
+# ============================================
+# 1. ServiceAccount (Already exists — we keep it)
+# ============================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-app-sa
+  namespace: default
+
+---
+# ============================================
+# 2. Role — Defines WHAT you can do
+# ============================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: default
+rules:
+- apiGroups: [""]                    # Core API group
+  resources: ["pods"]                # You can read pods
+  verbs: ["get", "list", "watch"]    # Read-only
+- apiGroups: ["apps"]
+  resources: ["deployments"]         # You can read deployments
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/log"]            # You can read pod logs
+  verbs: ["get", "list"]
+
+---
+# ============================================
+# 3. RoleBinding — Connects WHO to WHAT
+# ============================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: my-app-sa-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: my-app-sa
+  namespace: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io

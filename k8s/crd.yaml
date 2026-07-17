@@ -1,0 +1,33 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: dashboardalerts.devops.example.com
+spec:
+  group: devops.example.com
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              message:
+                type: string
+              severity:
+                type: string
+                enum: ["low", "medium", "high", "critical"]
+              component:
+                type: string
+              timestamp:
+                type: string
+  scope: Namespaced
+  names:
+    plural: dashboardalerts
+    singular: dashboardalert
+    kind: DashboardAlert
+    shortNames:
+    - da
