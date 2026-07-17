@@ -9,6 +9,7 @@ echo ""
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 1. Check if Minikube is running
@@ -76,26 +77,42 @@ echo "📊 Pod status:"
 kubectl get pods
 echo ""
 
-# 9. Get the service URL
-echo "🌐 Getting service URL..."
-SERVICE_URL=$(minikube service devops-dashboard --url 2>/dev/null || echo "")
-if [ -n "$SERVICE_URL" ]; then
-    echo -e "${GREEN}✅ Service URL: $SERVICE_URL${NC}"
-else
-    echo -e "${YELLOW}⚠️  Service not found. Check service status:${NC}"
-    kubectl get svc
+# 9. Access information
+echo "🌐 Access your app:"
+echo ""
+
+# Show NodePort info (for reference)
+MINIKUBE_IP=$(minikube ip 2>/dev/null || echo "")
+NODEPORT=$(kubectl get svc dashboard-service -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "")
+
+if [ -n "$MINIKUBE_IP" ] && [ -n "$NODEPORT" ]; then
+    echo -e "${YELLOW}ℹ️  NodePort URL (may not work on Windows):${NC}"
+    echo "   http://$MINIKUBE_IP:$NODEPORT"
     echo ""
-    echo "💡 Try port-forwarding:"
-    echo "   kubectl port-forward service/devops-dashboard 3000:80"
 fi
+
+# Port-forward option (ALWAYS WORKS)
+echo -e "${GREEN}✅ RECOMMENDED: Port-Forward (Always Works)${NC}"
+echo "   In a NEW terminal, run:"
+echo -e "${BLUE}   kubectl port-forward service/dashboard-service 3000:80${NC}"
+echo -e "${GREEN}   Then open: http://localhost:3000${NC}"
+echo ""
+
+# Alternative: Auto port-forward in background
+echo -e "${YELLOW}💡 BONUS: Auto port-forward in background${NC}"
+echo "   To run port-forward in background and keep it running:"
+echo -e "${BLUE}   nohup kubectl port-forward service/dashboard-service 3000:80 &${NC}"
+echo "   Then open: http://localhost:3000"
 echo ""
 
 # 10. Helpful commands
-echo "📚 Useful commands:"
+echo "📚 Quick Commands:"
 echo "  - Check logs:        kubectl logs -f deployment/devops-dashboard"
 echo "  - Get pods:          kubectl get pods"
 echo "  - Restart manually:  kubectl rollout restart deployment/devops-dashboard"
-echo "  - Port forward:      kubectl port-forward service/devops-dashboard 3000:80"
+echo "  - Check service:     kubectl get svc dashboard-service"
+echo "  - Port-forward:      kubectl port-forward service/dashboard-service 3000:80"
+echo "  - Stop port-forward: Press Ctrl+C in the terminal running it"
 echo ""
 
 echo -e "${GREEN}🎉 Deployment complete!${NC}"
